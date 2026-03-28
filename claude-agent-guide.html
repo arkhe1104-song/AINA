@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WBS·IA 주간 분석 에이전트 — 메인 오케스트레이터</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gradient-1: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    --gradient-accent: linear-gradient(135deg, #e94560 0%, #ff6b81 100%);
+    --accent: #e94560;
+    --accent-light: #ff6b81;
+    --bg: #f8f9fc;
+    --card-bg: #ffffff;
+    --text: #2d3436;
+    --text-muted: #636e72;
+    --border: #e8ecf1;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+    --radius: 16px;
+    --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--gradient-1);
+    color: #fff;
+    padding: 80px 40px 72px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -120px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(233,69,96,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: -60px;
+    width: 360px; height: 360px;
+    background: radial-gradient(circle, rgba(100,160,255,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1000px; margin: 0 auto; position: relative; z-index: 1; }
+
+  .hero-badge {
+    display: inline-block;
+    border: 1px solid rgba(233,69,96,0.5);
+    background: rgba(233,69,96,0.1);
+    color: #ff8fa3;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  .hero h1 {
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .hero h1 span {
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 16px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.75);
+    max-width: 640px;
+    margin-bottom: 32px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .hero-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .hero-meta-label {
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+    font-weight: 500;
+  }
+  .hero-meta-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+  }
+
+  /* ── CONTAINER ── */
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 60px 40px;
+  }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-icon {
+    width: 32px; height: 32px;
+    background: var(--gradient-accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    transition: all 0.2s ease;
+  }
+
+  /* ── PHILOSOPHY CARDS ── */
+  .phil-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 0;
+  }
+  .phil-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+  .phil-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .phil-icon { font-size: 28px; margin-bottom: 12px; }
+  .phil-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .phil-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+  /* ── TRIGGER CHIPS ── */
+  .trigger-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .trigger-chip {
+    background: #fff0f3;
+    border: 1px solid #ffc2cc;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+  }
+
+  /* ── WORKFLOW STEPS ── */
+  .steps-list { position: relative; }
+  .steps-list::before {
+    content: '';
+    position: absolute;
+    left: 19px; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .step-item {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .step-marker {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--gradient-accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 1;
+    box-shadow: 0 2px 8px rgba(233,69,96,0.3);
+    flex-shrink: 0;
+  }
+  .step-marker.step-sub {
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    font-size: 11px;
+    box-shadow: 0 2px 8px rgba(108,92,231,0.3);
+  }
+
+  .step-body {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+  .step-body:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+
+  .step-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .step-title { font-size: 16px; font-weight: 700; }
+  .step-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.5px;
+    margin-left: auto;
+  }
+  .badge-core { background: #fff0f3; color: var(--accent); border: 1px solid #ffc2cc; }
+  .badge-llm  { background: #f0f0ff; color: #6c5ce7; border: 1px solid #c9c9ff; }
+  .badge-auto { background: #f0fff4; color: #00b894; border: 1px solid #b2f5c8; }
+
+  .step-content { padding: 20px 24px; }
+  .step-content p { font-size: 14px; color: var(--text-muted); margin-bottom: 12px; }
+
+  pre.code-block {
+    background: #1a1a2e;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: #a8d8ff;
+    overflow-x: auto;
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+  pre.code-block .cmd { color: #74b9ff; }
+  pre.code-block .path { color: #55efc4; }
+  pre.code-block .comment { color: #636e72; font-style: italic; }
+
+  .step-outcomes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .outcome {
+    font-size: 13px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .outcome-icon { flex-shrink: 0; margin-top: 2px; }
+  .outcome.success .outcome-icon { color: #00b894; }
+  .outcome.fail   .outcome-icon { color: var(--accent); }
+
+  .output-file {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #f8f9fc;
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 6px;
+    color: #0f3460;
+  }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  thead th {
+    background: #f1f3f8;
+    font-weight: 700;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+  }
+  thead th:first-child { border-radius: 10px 0 0 0; }
+  thead th:last-child  { border-radius: 0 10px 0 0; }
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #fafbfd; }
+
+  .table-skill {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0f3460;
+    background: #eef2ff;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid #c7d2fe;
+  }
+  .table-path {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ── REPORT SPEC TABLE ── */
+  .spec-table thead th { background: #1a1a2e; color: #fff; border-bottom: none; }
+  .spec-table tbody td:first-child { font-weight: 600; color: var(--accent); }
+
+  /* ── ESCALATION STEPS ── */
+  .escalation-steps { display: flex; flex-direction: column; gap: 12px; }
+  .esc-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .esc-num {
+    width: 28px; height: 28px;
+    background: var(--gradient-accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .esc-text { font-size: 14px; color: var(--text); padding-top: 4px; }
+
+  /* ── FILE PATTERNS ── */
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .pattern-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+  }
+  .pattern-type {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .pattern-type.wbs   { color: #e17055; }
+  .pattern-type.iabo  { color: #0984e3; }
+  .pattern-type.iafo  { color: #6c5ce7; }
+  .pattern-type.if_   { color: #00b894; }
+  .pattern-code {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: #0f3460;
+    background: #f8f9fc;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+  }
+  .pattern-note { font-size: 12px; color: var(--text-muted); }
+
+  /* ── DATE RULES ── */
+  .date-rules { display: flex; flex-direction: column; gap: 10px; }
+  .date-rule {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #f8f9fc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .date-rule-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .date-rule-text { font-size: 13.5px; line-height: 1.6; }
+  .date-rule-text code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  /* ── PRINCIPLE BOX ── */
+  .principle-box {
+    background: var(--gradient-1);
+    border-radius: var(--radius);
+    padding: 36px 40px;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .principle-box::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(233,69,96,0.2) 0%, transparent 70%);
+  }
+  .principle-box p {
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1.8;
+    position: relative; z-index: 1;
+  }
+  .principle-box strong { color: #ff8fa3; font-weight: 700; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #1a1a2e;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    padding: 28px 40px;
+    font-size: 13px;
+  }
+  footer strong { color: rgba(255,255,255,0.8); }
+
+  /* ── SECTION SPACING ── */
+  section { margin-bottom: 56px; }
+
+  /* ── AINA CHATBOT ── */
+  .aina-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .aina-character-card {
+    background: linear-gradient(160deg, #fff5f8 0%, #fff0fa 100%);
+    border: 1px solid #ffc2d4;
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .aina-svg-wrap {
+    width: 100px; height: 100px;
+    background: #fff5f8;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #ffc2d4;
+    box-shadow: 0 4px 16px rgba(233,69,96,0.12);
+  }
+  .aina-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #c0392b;
+    margin-bottom: 4px;
+  }
+  .aina-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .aina-traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  .aina-trait {
+    font-size: 11px;
+    background: #fff0f3;
+    border: 1px solid #ffc2cc;
+    color: var(--accent);
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+
+  .widget-diagram {
+    background: #1a1a2e;
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: #a8d8ff;
+    line-height: 1.8;
+  }
+  .widget-diagram .wd-fab  { color: #fd79a8; }
+  .widget-diagram .wd-panel{ color: #55efc4; }
+  .widget-diagram .wd-btn  { color: #fdcb6e; }
+  .widget-diagram .wd-msg  { color: #74b9ff; }
+
+  .fn-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .fn-card {
+    background: #f8f9fc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .fn-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .fn-desc { font-size: 13px; color: var(--text-muted); }
+
+  .server-endpoint-table thead th { background: #1a1a2e; color: #fff; border-bottom: none; }
+  .server-endpoint-table tbody td:first-child { font-weight: 700; color: #0984e3; font-family: var(--mono); font-size: 12px; }
+  .server-endpoint-table tbody td:nth-child(2) { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+
+  .tg-config {
+    background: #1a1a2e;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: #55efc4;
+    line-height: 1.8;
+  }
+  .tg-config .key { color: #74b9ff; }
+  .tg-config .val { color: #fdcb6e; }
+  .tg-config .brace { color: #dfe6e9; }
+
+  .warn-box {
+    background: #fff9e6;
+    border: 1px solid #f9ca24;
+    border-left: 4px solid #f9ca24;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13.5px;
+    color: #6c5100;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .warn-icon { font-size: 18px; flex-shrink: 0; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .aina-layout { grid-template-columns: 1fr; }
+    .fn-grid { grid-template-columns: 1fr; }
+    .hero { padding: 56px 24px 48px; }
+    .hero h1 { font-size: 26px; }
+    .container { padding: 40px 24px; }
+    .phil-grid { grid-template-columns: 1fr; }
+    .pattern-grid { grid-template-columns: 1fr; }
+    .hero-meta { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">Agent Orchestrator · v1.0</div>
+    <h1>WBS·IA 주간 분석 에이전트<br><span>메인 오케스트레이터</span></h1>
+    <p class="hero-sub">
+      매주 갱신되는 WBS, IA_BO, IA_FO, IF Excel 파일을 자동 분석하여 크리티컬 리스크를 식별하고,
+      내부 관계자용 HTML 보고서·대시보드 4종을 생성하며 발주처 제출용 PDF를 자동 변환합니다.<br>
+      특히 도메인별 상세 보고서에는 <strong style="color:#ff8fa3;">아이나(AINA) AI 챗봇</strong>과 <strong style="color:#ff8fa3;">텔레그램</strong>이 연동되었습니다.
+    </p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">대상 프로젝트</span>
+        <span class="hero-meta-value">인천공항공사 식음 플랫폼</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">출력 언어</span>
+        <span class="hero-meta-value">한국어 · 비즈니스 문체</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">워크플로우</span>
+        <span class="hero-meta-value">STEP 1 — 8</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">담당자</span>
+        <span class="hero-meta-value">송금아</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ═══ PRINCIPLE ═══ -->
+  <div class="principle-box">
+    <p>
+      <strong>수치는 스크립트가 계산, 맥락과 의미는 LLM이 판단.</strong><br>
+      LLM이 수치를 직접 계산하거나 추정하는 일체의 로직을 금지하며,<br>
+      단위는 반드시 명시합니다 (건, MD, %p 등).
+    </p>
+  </div>
+
+  <!-- ═══ 1. 역할 및 분석 철학 ═══ -->
+  <section>
+    <div class="section-title">
+      <div class="section-icon">🎯</div>
+      역할 및 분석 철학
+    </div>
+    <div class="phil-grid">
+      <div class="phil-card">
+        <div class="phil-icon">🔍</div>
+        <div class="phil-label">리스크 예측</div>
+        <div class="phil-desc">28년 플랫폼 전문가의 시각으로 프로젝트 리스크를 사전 예측하고 크리티컬 이슈를 식별합니다.</div>
+      </div>
+      <div class="phil-card">
+        <div class="phil-icon">📊</div>
+        <div class="phil-label">자동 분석</div>
+        <div class="phil-desc">매주 갱신되는 Excel 파일 4종을 자동 파싱·분석하여 정량 지표와 트렌드를 산출합니다.</div>
+      </div>
+      <div class="phil-card">
+        <div class="phil-icon">📄</div>
+        <div class="phil-label">보고서 생성</div>
+        <div class="phil-desc">내부 관계자용 HTML 보고서·대시보드 4종과 발주처 제출용 PDF를 자동으로 생성합니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 2. 실행 트리거 ═══ -->
+  <section>
+    <div class="section-title">
+      <div class="section-icon">⚡</div>
+      실행 트리거
+    </div>
+    <div class="card">
+      <p style="font-size:14px; color:var(--text-muted); margin-bottom:16px;">
+        아래 문구 중 하나를 입력하면 <strong>STEP 1 ~ 8 전체 워크플로우</strong>가 자동 실행됩니다.
+      </p>
+      <div class="trigger-grid">
+        <span class="trigger-chip">WBS 분석해줘</span>
+        <span class="trigger-chip">WBS 보고서 만들어줘</span>
+        <span class="trigger-chip">주간 보고서 생성</span>
+        <span class="trigger-chip">월간 보고서 생성</span>
+        <span class="trigger-chip">분석 시작</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 3. 워크플로우 ═══ -->
+  <section>
+    <div class="section-title">
+      <div class="section-icon">🔄</div>
+      워크플로우 실행 순서 (STEP 1 ~ 8)
+    </div>
+
+    <!-- 공통 규칙 -->
+    <div class="card" style="margin-bottom:28px;">
+      <div style="font-size:14px; font-weight:700; margin-bottom:12px; color:var(--text);">공통 규칙</div>
+      <div class="date-rules">
+        <div class="date-rule">
+          <div class="date-rule-icon">📅</div>
+          <div class="date-rule-text">분석 기준일: <code>datetime.now().strftime('%Y%m%d')</code> 자동 감지</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">📁</div>
+          <div class="date-rule-text">출력 폴더: <code>output/YYYYMMDD/</code> — 매주 신규 생성, 이전 폴더 유지</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">🔁</div>
+          <div class="date-rule-text">재시도 상한: 스킬별 최대 1회. 2회 실패 시 에스컬레이션</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">✅</div>
+          <div class="date-rule-text">부분 성공 허용: HTML 보고서 중 하나 실패해도 나머지 계속 생성</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps-list">
+
+      <!-- STEP 1 -->
+      <div class="step-item">
+        <div class="step-marker">1</div>
+        <div class="step-body">
+          <div class="step-header">
+            <div class="step-title">환경 초기화 및 파일 검증</div>
+            <span class="step-badge badge-auto">AUTO</span>
+          </div>
+          <div class="step-content">
+            <pre class="code-block"><span class="cmd">python</span> <span class="path">.claude/skills/excel-parser/scripts/validate_inputs.py</span></pre>
+            <div class="step-outcomes">
+              <div class="outcome success"><span class="outcome-icon">✅</span><span>성공 → STEP 2 진행</span></div>
+              <div class="outcome fail"><span class="outcome-icon">❌</span><span>실패 → 누락 파일명과 기대 경로를 한국어로 출력 후 중단 (에스컬레이션)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-item">
+        <div class="step-marker">2</div>
+        <div class="step-body">
+          <div class="step-header">
+            <div class="step-title">Excel 파싱 및 구조화</div>
+            <span class="step-badge badge-auto">AUTO</span>
+          </div>
+          <div class="step-content">
+            <pre class="code-block"><span class="cmd">python</span> <span class="path">.claude/skills/excel-parser/scripts/excel_parser.py</span></pre>
+            <div class="step-outcomes">
+              <div class="outcome success"><span class="outcome-icon">✅</span><span>성공 → <span class="output-file">output/YYYYMMDD/analysis.json</span> 생성 → STEP 3 진행</span></div>
+              <div class="outcome fail"><span class="outcome-icon">🔁</span><span>실패 → 1회 자동 재시도 (컬럼 매핑 재확인) → 실패 시 에스컬레이션</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step-item">
+        <div class="step-marker">3</div>
+        <div class="step-body">
+          <div class="step-header">
+            <div class="step-title">정량 분석 + 트렌드 비교</div>
+            <span class="step-badge badge-auto">AUTO</span>
+          </div>
+          <div class="step-content">
+            <pre class="code-block"><span class="cmd">python</span> <span class="path">.claude/skills/quantitative-analyzer/scripts/quantitative_analyze.py</span></pre>
+            <div class="step-outcomes">
+              <div class="outcome success"><span class="outcome-icon">✅</span><span>성공 → <code style="font-family:var(--mono);font-size:12px;">analysis.json</code>에 trend 섹션 추가 → STEP 4 진행</span></div>
+              <div class="outcome fail"><span class="outcome-icon">❌</span><span>실패 → 에스컬레이션 (원본 수치 불일치 상세 출력)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step-item">
+        <div class="step-marker">4</div>
+        <div class="step-body">
+          <div class="step-header">
+            <div class="step-title">LLM 리스크 판단 ★ 핵심</div>
+            <span class="step-badge badge-llm">LLM</span>
+          </div>
+          <div class="step-content">
+            <p>risk-assessor 서브에이전트를 호출하여 AI가 직접 리스크를 판단합니다.</p>
+            <div class="date-rules" style="margin-bottom:12px;">
+              <div class="date-rule">
+                <div class="date-rule-icon">📋</div>
+                <div class="date-rule-text"><code>output/YYYYMMDD/analysis.json</code> 전체 내용을 컨텍스트로 전달</div>
+              </div>
+              <div class="date-rule">
+                <div class="date-rule-icon">📖</div>
+                <div class="date-rule-text"><code>/docs/risk_framework.md</code> 판단 프레임워크 참조</div>
+              </div>
+              <div class="date-rule">
+                <div class="date-rule-icon">🤖</div>
+                <div class="date-rule-text"><code>.claude/agents/risk-assessor/AGENT.md</code> 지침에 따라 판단 수행</div>
+              </div>
+              <div class="date-rule">
+                <div class="date-rule-icon">✔️</div>
+                <div class="date-rule-text">출력 검증: <code>severity</code> / <code>evidence</code> / <code>action</code> / <code>deadline</code> 4개 필드 모두 존재 확인</div>
+              </div>
+            </div>
+            <div class="step-outcomes">
+              <div class="outcome success"><span class="outcome-icon">✅</span><span>성공 → <span class="output-file">output/YYYYMMDD/risk_assessment.json</span> 생성 → STEP 5 진행</span></div>
+              <div class="outcome fail"><span class="outcome-icon">🔁</span><span>실패 → 1회 재시도 (누락 필드 보완 요청) → 데이터 불충분 시 에스컬레이션</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step-item">
+        <div class="step-marker">5</div>
+        <div class="step-body">
+          <div class="step-header">
+            <div class="step-title">HTML 보고서·대시보드 생성</div>
+            <span class="step-badge badge-auto">AUTO</span>
+          </div>
+          <div class="step-content">
+            <pre class="code-block"><span class="cmd">python</span> <span class="path">.claude/skills/html-generator/scripts/generate_html.py</span></pre>
+            <p>아래 2개 파일을 모두 생성합니다.</p>
+            <div class="date-rules" style="margin-bottom:12px;">
+              <div class="date-rule">
+                <div class="date-rule-icon">📊</div>
+                <div class="date-rule-text"><code>output/YYYYMMDD/dashboard/index.html</code> — 인터랙티브 대시보드 (탭·필터 포함)</div>
+              </div>
+              <div class="date-rule">
+                <div class="date-rule-icon">📄</div>
+                <div class="date-rule-text"><code>output/YYYYMMDD/report_YYYYMMDD.html</code> — 단독 열람 보고서 (확정 양식)</div>
+              </div>
+            </div>
+            <!-- 보고서 확정 양식 -->
+            <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:10px;">report_YYYYMMDD.html 확정 양식 (변경 금지)</div>
+            <div class="table-wrap">
+              <table class="spec-table">
+                <thead><tr><th>순서</th><th>섹션</th><th>내용</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>헤더</td><td>제목·기준일·전체상태 뱃지·overall_comment</td></tr>
+                  <tr><td>2</td><td>KPI 바</td><td>진행률 / Critical·High 건수 / 지연 태스크 / WBS·IA·IF 건수</td></tr>
+                  <tr><td>3</td><td>차트 (Chart.js)</td><td>담당자별 계획MD 가로 막대 차트(좌) + 리스크 심각도 도넛 차트(우)</td></tr>
+                  <tr><td>4</td><td>리스크 목록</td><td>핵심근거 전체 + 권고조치 + 기한 칩, 심각도별 좌측 컬러 바</td></tr>
+                  <tr><td>5</td><td>지연 태스크 테이블</td><td>task_id / 태스크명 / 담당자 / 계획종료일 / 지연일 수 / 상태 칩</td></tr>
+                  <tr><td>6</td><td>푸터</td><td>기준일·프로젝트명</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="step-outcomes" style="margin-top:12px;">
+              <div class="outcome fail"><span class="outcome-icon">🔁</span><span>실패 → 1회 자동 재시도 → 실패 시 스킵 + 로그</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="step-item">
+        <div class="step-marker">6</div>
+        <div class="step-body">
+          <div class="step-header">
+            <div class="step-title">도메인별 상세 보고서 + 발주처 보고서 생성</div>
+            <span class="step-badge badge-auto">AUTO</span>
+          </div>
+          <div class="step-content">
+            <pre class="code-block"><span class="cmd">python</span> <span class="path">.claude/skills/html-generator/scripts/generate_domain_report.py</span>
+<span class="cmd">python</span> <span class="path">.claude/skills/html-generator/scripts/generate_client_report.py</span></pre>
+            <div class="date-rules" style="margin-bottom:12px;">
+              <div class="date-rule">
+                <div class="date-rule-icon">🏢</div>
+                <div class="date-rule-text"><code>output/YYYYMMDD/domain_report_YYYYMMDD.html</code> — PM 이슈 집중 뷰 (내부용)</div>
+              </div>
+              <div class="date-rule">
+                <div class="date-rule-icon">📤</div>
+                <div class="date-rule-text"><code>output/YYYYMMDD/client_report_YYYYMMDD.html</code> — 인천공항공사 발주처 보고서 (외부용, 이슈 미노출)</div>
+              </div>
+            </div>
+            <!-- domain_report 확정 양식 -->
+            <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:10px;">domain_report_YYYYMMDD.html 확정 양식 (변경 금지)</div>
+            <div class="table-wrap">
+              <table class="spec-table">
+                <thead><tr><th>섹션</th><th>내용</th></tr></thead>
+                <tbody>
+                  <tr><td>도메인 헤더</td><td>도메인명 + 전체 진행률 게이지 + 전주 대비 ±%p 화살표 + 상태 뱃지</td></tr>
+                  <tr><td>계획대비 KPI</td><td>총 태스크 / 완료 / 미완료 / 중단 건수 + 계획 MD 총합</td></tr>
+                  <tr><td>이슈 레드존</td><td>🔴 즉시처리(중단·30일+ 지연) / 🟠 이번주처리(7일+ 지연·좀비) 항목 강조 카드</td></tr>
+                  <tr><td>숨겨진 리스크 탐지</td><td>좀비 태스크 / 정체 구간 / 에픽 미착수 / 담당자 독점 자동 감지</td></tr>
+                  <tr><td>담당자 부하 바</td><td>도메인 내 담당자별 계획MD + 진행중 태스크 수</td></tr>
+                  <tr><td>태스크 상세 테이블</td><td>지연/중단 → 진행중 → 완료 순 정렬, 종료일·지연일수·상태 칩 포함</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 6.5 -->
+      <div class="step-item">
+        <div class="step-marker step-sub">6.5</div>
+        <div class="step-body">
+          <div class="step-header">
+            <div class="step-title">발주처 보고서 PDF 변환 (인천공항공사 제출용)</div>
+            <span class="step-badge badge-auto">AUTO</span>
+          </div>
+          <div class="step-content">
+            <pre class="code-block"><span class="cmd">python</span> <span class="path">.claude/skills/html-generator/scripts/generate_client_pdf.py</span></pre>
+            <div class="date-rules" style="margin-bottom:12px;">
+              <div class="date-rule">
+                <div class="date-rule-icon">🌐</div>
+                <div class="date-rule-text">Chrome 헤드리스 사용 — A4 용지, 여백 10mm, 헤더/푸터 없음</div>
+              </div>
+              <div class="date-rule">
+                <div class="date-rule-icon">⚠️</div>
+                <div class="date-rule-text">Chrome/Edge 미설치 시 에스컬레이션 — 브라우저에서 <strong>Ctrl+P → PDF로 저장</strong> 안내</div>
+              </div>
+            </div>
+            <div class="step-outcomes">
+              <div class="outcome success"><span class="outcome-icon">✅</span><span>성공 → <span class="output-file">output/YYYYMMDD/client_report_YYYYMMDD.pdf</span> 생성 → STEP 7 진행</span></div>
+              <div class="outcome fail"><span class="outcome-icon">⏭️</span><span>실패 → 스킵 + 로그 (HTML 파일 유지, 수동 인쇄 대체 가능)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 6.7 -->
+      <div class="step-item">
+        <div class="step-marker step-sub" style="background:linear-gradient(135deg,#e17055,#fd79a8);box-shadow:0 2px 8px rgba(225,112,85,0.3);">6.7</div>
+        <div class="step-body">
+          <div class="step-header">
+            <div class="step-title">아이나 채팅 서버 실행 (챗봇 활성화)</div>
+            <span class="step-badge" style="background:#fff5f8;color:#c0392b;border:1px solid #ffc2cc;">AINA</span>
+          </div>
+          <div class="step-content">
+            <pre class="code-block"><span class="cmd">python</span> <span class="path">.claude/skills/html-generator/scripts/chat_server.py</span></pre>
+            <div class="date-rules" style="margin-bottom:12px;">
+              <div class="date-rule">
+                <div class="date-rule-icon">🌐</div>
+                <div class="date-rule-text">접속: <code>http://localhost:8765/report</code> — 반드시 http 사용 (file:// 챗봇 동작 불가)</div>
+              </div>
+              <div class="date-rule">
+                <div class="date-rule-icon">📦</div>
+                <div class="date-rule-text">기동 시 최신 <code>analysis.json</code> + <code>risk_assessment.json</code> 자동 로드</div>
+              </div>
+              <div class="date-rule">
+                <div class="date-rule-icon">🔁</div>
+                <div class="date-rule-text">보고서 재생성 후 서버 재시작 필수</div>
+              </div>
+            </div>
+            <div class="step-outcomes">
+              <div class="outcome success"><span class="outcome-icon">✅</span><span>성공 → 아이나 챗봇 활성화, 텔레그램 전송 기능 동작 → STEP 7 진행</span></div>
+              <div class="outcome fail"><span class="outcome-icon">⏭️</span><span>실패 → 스킵 + 로그 (보고서 열람은 가능, 챗봇 비활성화 상태)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 7 -->
+      <div class="step-item">
+        <div class="step-marker">7</div>
+        <div class="step-body">
+          <div class="step-header">
+            <div class="step-title">로컬 파일 확인 및 브라우저 자동 실행</div>
+            <span class="step-badge badge-auto">AUTO</span>
+          </div>
+          <div class="step-content">
+            <pre class="code-block"><span class="cmd">python</span> <span class="path">.claude/skills/browser-opener/scripts/open_browser.py</span></pre>
+            <div class="step-outcomes">
+              <div class="outcome success"><span class="outcome-icon">✅</span><span><code style="font-family:var(--mono);font-size:12px;">report_YYYYMMDD.html</code> 존재 확인 → 브라우저 열기 → <code style="font-family:var(--mono);font-size:12px;">run_result.json</code> 저장</span></div>
+              <div class="outcome fail"><span class="outcome-icon">❌</span><span>HTML 없음 → 에스컬레이션 (로컬 파일 경로 수동 열기 방법 한국어 안내)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 8 -->
+      <div class="step-item">
+        <div class="step-marker">8</div>
+        <div class="step-body">
+          <div class="step-header">
+            <div class="step-title">결과 요약 출력</div>
+            <span class="step-badge badge-llm">LLM</span>
+          </div>
+          <div class="step-content">
+            <p>LLM이 직접 한국어 비즈니스 문체로 최종 요약을 출력합니다.</p>
+            <div class="date-rules">
+              <div class="date-rule"><div class="date-rule-icon">📄</div><div class="date-rule-text">HTML 보고서 경로 <code>report_YYYYMMDD.html</code></div></div>
+              <div class="date-rule"><div class="date-rule-icon">📊</div><div class="date-rule-text">HTML 대시보드 경로 <code>dashboard/index.html</code></div></div>
+              <div class="date-rule"><div class="date-rule-icon">🏢</div><div class="date-rule-text">도메인별 상세 보고서 경로 <code>domain_report_YYYYMMDD.html</code> — 내부 PM용</div></div>
+              <div class="date-rule"><div class="date-rule-icon">📤</div><div class="date-rule-text">발주처 보고서 경로 <code>client_report_YYYYMMDD.html</code> — 인천공항공사 외부 제출용</div></div>
+              <div class="date-rule"><div class="date-rule-icon">📑</div><div class="date-rule-text">발주처 PDF 경로 <code>client_report_YYYYMMDD.pdf</code> — 인천공항공사 제출용 PDF</div></div>
+              <div class="date-rule"><div class="date-rule-icon">💬</div><div class="date-rule-text">아이나 챗봇 접속 URL <code>http://localhost:8765/report</code> — domain_report + 채팅 서버 동작 여부</div></div>
+              <div class="date-rule"><div class="date-rule-icon">🚨</div><div class="date-rule-text">크리티컬 리스크 상위 3건 요약</div></div>
+              <div class="date-rule"><div class="date-rule-icon">📈</div><div class="date-rule-text">이전 주 대비 변화 요약</div></div>
+              <div class="date-rule"><div class="date-rule-icon">⏱️</div><div class="date-rule-text">총 실행 소요 시간</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /steps-list -->
+  </section>
+
+  <!-- ═══ 3-b. STEP 6.7 채팅 서버 ═══ -->
+  <!-- (워크플로우 섹션 내부이지만 별도 강조) -->
+
+  <!-- ═══ 4. 아이나 AI 챗봇 & 텔레그램 ═══ -->
+  <section>
+    <div class="section-title">
+      <div class="section-icon">💬</div>
+      아이나(Aina) AI 챗봇 &amp; 텔레그램 연동
+    </div>
+
+    <!-- 캐릭터 + 위젯 구조 -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:16px;">캐릭터 설계 &amp; 위젯 구조</div>
+      <div class="aina-layout">
+        <!-- 아이나 캐릭터 카드 -->
+        <div class="aina-character-card">
+          <div class="aina-svg-wrap">
+            <svg viewBox="0 0 100 100" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+              <!-- 배경 원 -->
+              <circle cx="50" cy="50" r="48" fill="#FFF5F8"/>
+              <!-- 머리카락 (뒤) -->
+              <ellipse cx="50" cy="42" rx="26" ry="28" fill="#A0522D"/>
+              <!-- 얼굴 -->
+              <ellipse cx="50" cy="50" rx="21" ry="23" fill="#FFDAB9"/>
+              <!-- 아호게 3가닥 -->
+              <path d="M46 22 Q44 12 43 8 Q45 14 47 12 Q46 16 48 14 Q47 18 49 17" stroke="#A0522D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <path d="M50 20 Q50 10 51 6 Q52 12 53 10 Q52 15 54 13" stroke="#A0522D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <path d="M54 22 Q56 12 57 8 Q55 14 53 12" stroke="#A0522D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <!-- 눈 (크고 반짝) -->
+              <ellipse cx="40" cy="50" rx="9" ry="9.5" fill="white"/>
+              <ellipse cx="60" cy="50" rx="9" ry="9.5" fill="white"/>
+              <ellipse cx="40" cy="51" rx="6.5" ry="7" fill="#26A69A"/>
+              <ellipse cx="60" cy="51" rx="6.5" ry="7" fill="#26A69A"/>
+              <ellipse cx="40" cy="51" rx="4" ry="4.5" fill="#1a1a2e"/>
+              <ellipse cx="60" cy="51" rx="4" ry="4.5" fill="#1a1a2e"/>
+              <circle cx="42.5" cy="48.5" r="2" fill="white"/>
+              <circle cx="62.5" cy="48.5" r="2" fill="white"/>
+              <circle cx="38.5" cy="52" r="1" fill="white" opacity="0.7"/>
+              <circle cx="58.5" cy="52" r="1" fill="white" opacity="0.7"/>
+              <!-- 눈썹 (비대칭 — 오른쪽 더 높음) -->
+              <path d="M33 40 Q40 37 45 39" stroke="#6B3A2A" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+              <path d="M55 38 Q61 35 67 37" stroke="#6B3A2A" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+              <!-- 코 -->
+              <ellipse cx="50" cy="58" rx="2" ry="1.2" fill="#E8A090" opacity="0.6"/>
+              <!-- 입 (크게 벌림 + 이빨) -->
+              <path d="M42 64 Q50 72 58 64" stroke="#D4607A" stroke-width="1.5" fill="#FF8FA3"/>
+              <rect x="45" y="64" width="10" height="3" rx="1" fill="white"/>
+              <ellipse cx="50" cy="67.5" rx="4.5" ry="3" fill="#FF6B9D" opacity="0.7"/>
+              <!-- 볼터치 -->
+              <ellipse cx="35" cy="58" rx="5" ry="3" fill="#FF9BAA" opacity="0.35"/>
+              <ellipse cx="65" cy="58" rx="5" ry="3" fill="#FF9BAA" opacity="0.35"/>
+              <!-- 후드티 -->
+              <path d="M20 88 Q28 72 50 70 Q72 72 80 88 L80 100 L20 100Z" fill="#FF6B6B"/>
+              <path d="M42 70 Q50 68 58 70 L56 78 Q50 82 44 78Z" fill="#E55555"/>
+              <!-- 흰 하트 패치 -->
+              <path d="M48 85 Q46 83 44 85 Q44 87 48 90 Q52 87 52 85 Q50 83 48 85Z" fill="white" opacity="0.8"/>
+            </svg>
+          </div>
+          <div class="aina-name">아이나 (Aina)</div>
+          <div class="aina-sub">PM 전용 AI 데이터 어시스턴트<br>도메인 보고서 내장</div>
+          <div class="aina-traits">
+            <span class="aina-trait">지브리풍</span>
+            <span class="aina-trait">개구장이</span>
+            <span class="aina-trait">밤색 머리</span>
+            <span class="aina-trait">틸 눈</span>
+            <span class="aina-trait">코럴 후드티</span>
+          </div>
+        </div>
+
+        <!-- 위젯 구조 -->
+        <div>
+          <div style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">위젯은 <code style="font-family:var(--mono);font-size:12px;background:#f8f9fc;border:1px solid var(--border);padding:2px 6px;border-radius:4px;">domain_report_YYYYMMDD.html</code> 에만 내장됩니다 (발주처 보고서 미포함).</div>
+          <div class="widget-diagram">
+<span class="wd-fab">FAB 버튼</span> (우하단 고정, z-index:1000)
+  └── 아이나 SVG (기본) / ✕ (열렸을 때)
+
+<span class="wd-panel">채팅 패널</span> (bottom:98px, right:28px)
+  ├── 헤더 : 아이나 40px 아바타 + 이름 + 온라인 점
+  ├── <span class="wd-btn">빠른 버튼</span>
+  │     🔴 급한이슈   📅 차주집중
+  │     👤 담당자부하  ⚠️ Critical리스크
+  │     📱 텔레그램전송
+  ├── <span class="wd-msg">#chat-messages</span> — 메시지 스트림
+  └── #chat-input + 전송 버튼</div>
+          <div style="margin-top:12px; font-size:13px; color:var(--text-muted);">
+            위젯 수정 시 <code style="font-family:var(--mono);font-size:12px;background:#f8f9fc;border:1px solid var(--border);padding:2px 6px;border-radius:4px;">build_chat_widget_html()</code> 함수 편집 후 <code style="font-family:var(--mono);font-size:12px;background:#f8f9fc;border:1px solid var(--border);padding:2px 6px;border-radius:4px;">generate_domain_report.py</code> 재실행
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JS 함수 -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:14px;">JS 함수 (window 노출)</div>
+      <div class="fn-grid">
+        <div class="fn-card">
+          <div class="fn-name">chatToggle()</div>
+          <div class="fn-desc">FAB 클릭 시 채팅 패널 열기/닫기</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">chatSend()</div>
+          <div class="fn-desc">입력창 메시지 전송</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">chatSendQuick(msg)</div>
+          <div class="fn-desc">빠른 버튼 프리셋 메시지 전송</div>
+        </div>
+        <div class="fn-card">
+          <div class="fn-name">sendDailyTasksTelegram()</div>
+          <div class="fn-desc">오늘 할일 텔레그램 즉시 전송</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 채팅 서버 -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:14px;">채팅 서버 (chat_server.py)</div>
+      <div class="date-rules" style="margin-bottom:14px;">
+        <div class="date-rule">
+          <div class="date-rule-icon">📂</div>
+          <div class="date-rule-text"><strong>위치</strong>: <code>.claude/skills/html-generator/scripts/chat_server.py</code></div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">▶️</div>
+          <div class="date-rule-text"><strong>실행</strong>: <code>python .claude/skills/html-generator/scripts/chat_server.py</code></div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">🌐</div>
+          <div class="date-rule-text"><strong>접속 URL</strong>: <code>http://localhost:8765/report</code> — 반드시 http 사용 (file:// 불가)</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">🤖</div>
+          <div class="date-rule-text"><strong>AI 백엔드</strong>: Claude Code CLI (<code>claude --print</code>) 우선 → CLI 없을 때 anthropic SDK fallback</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">📦</div>
+          <div class="date-rule-text"><strong>데이터 자동 로드</strong>: 기동 시 <code>output/</code> 최신 날짜 폴더의 <code>analysis.json</code> + <code>risk_assessment.json</code></div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="server-endpoint-table">
+          <thead><tr><th>메서드</th><th>경로</th><th>기능</th></tr></thead>
+          <tbody>
+            <tr><td>GET</td><td>/report</td><td>domain_report 서빙 (file://CORS 우회)</td></tr>
+            <tr><td>GET</td><td>/health</td><td>서버 상태 확인</td></tr>
+            <tr><td>POST</td><td>/chat</td><td>아이나 채팅 (Claude Code CLI 백엔드)</td></tr>
+            <tr><td>POST</td><td>/send-daily-tasks</td><td>오늘 할일 텔레그램 전송</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 텔레그램 설정 -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="font-size:14px; font-weight:700; color:var(--text); margin-bottom:14px;">텔레그램 설정</div>
+      <p style="font-size:13.5px; color:var(--text-muted); margin-bottom:12px;"><code style="font-family:var(--mono);font-size:12px;background:#f8f9fc;border:1px solid var(--border);padding:2px 6px;border-radius:4px;">wbs_config.json</code>의 <code style="font-family:var(--mono);font-size:12px;background:#f8f9fc;border:1px solid var(--border);padding:2px 6px;border-radius:4px;">telegram</code> 섹션에 봇 토큰과 채팅 ID를 설정합니다.</p>
+      <div class="tg-config">{
+  <span class="key">"telegram"</span>: {
+    <span class="key">"bot_token"</span>: <span class="val">"&lt;BotFather 발급 토큰&gt;"</span>,
+    <span class="key">"chat_id"</span>:  <span class="val">"&lt;개인 또는 채널 chat_id&gt;"</span>
+  }
+}</div>
+      <div class="date-rules" style="margin-top:12px;">
+        <div class="date-rule">
+          <div class="date-rule-icon">🔐</div>
+          <div class="date-rule-text">토큰은 <code>~/.claude/channels/telegram/.env</code> 에도 저장 (chmod 600 권장)</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">📱</div>
+          <div class="date-rule-text">전송: 보고서 내 <strong>📱 텔레그램전송</strong> 빠른 버튼 또는 <code>sendDailyTasksTelegram()</code> 호출</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 운영 주의사항 -->
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="warn-box">
+        <div class="warn-icon">⚠️</div>
+        <div><strong>보고서 재생성 후 서버 재시작 필수</strong> — 서버가 기동 시점의 report_path를 고정으로 사용합니다.</div>
+      </div>
+      <div class="warn-box">
+        <div class="warn-icon">🚫</div>
+        <div><strong>file:// URL에서 챗봇 동작 불가</strong> — Chrome Private Network Access 정책으로 차단됩니다. 반드시 <code style="font-family:var(--mono);font-size:12px;">http://localhost:8765/report</code> 로 접속하세요.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 5. 스킬 호출 가이드 ═══ -->
+  <!-- (section title already says 4) -->
+  <section>
+    <div class="section-title">
+      <div class="section-icon">🧩</div>
+      스킬 호출 가이드
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>스킬</th><th>위치</th><th>호출 시점</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="table-skill">excel-parser</span></td>
+              <td><span class="table-path">.claude/skills/excel-parser/</span></td>
+              <td>STEP 1 · 2</td>
+            </tr>
+            <tr>
+              <td><span class="table-skill">quantitative-analyzer</span></td>
+              <td><span class="table-path">.claude/skills/quantitative-analyzer/</span></td>
+              <td>STEP 3</td>
+            </tr>
+            <tr>
+              <td><span class="table-skill">html-generator</span></td>
+              <td><span class="table-path">.claude/skills/html-generator/</span></td>
+              <td>STEP 5 · 6 · 6.5 <small style="color:var(--text-muted)">(generate_html.py, generate_domain_report.py, generate_client_report.py, generate_client_pdf.py)</small></td>
+            </tr>
+            <tr>
+              <td><span class="table-skill">browser-opener</span></td>
+              <td><span class="table-path">.claude/skills/browser-opener/</span></td>
+              <td>STEP 7</td>
+            </tr>
+            <tr>
+              <td><span class="table-skill" style="background:#fff0f3;border-color:#ffc2cc;color:var(--accent);">chat-server</span></td>
+              <td><span class="table-path">.claude/skills/html-generator/scripts/chat_server.py</span></td>
+              <td>STEP 6.7 — 아이나 챗봇 백엔드 (<code style="font-family:var(--mono);font-size:12px;">http://localhost:8765</code>)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 5. 서브에이전트 ═══ -->
+  <section>
+    <div class="section-title">
+      <div class="section-icon">🤖</div>
+      서브에이전트 호출 가이드
+    </div>
+    <div class="card">
+      <div style="font-size:14px; font-weight:700; margin-bottom:16px; color:var(--accent);">risk-assessor</div>
+      <div class="date-rules">
+        <div class="date-rule">
+          <div class="date-rule-icon">🔔</div>
+          <div class="date-rule-text"><strong>호출 조건:</strong> STEP 3 완료 후 <code>analysis.json</code> 존재 확인 시</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">📦</div>
+          <div class="date-rule-text"><strong>데이터 전달:</strong> <code>analysis.json</code> 전체 내용(JSON 원문)을 인라인으로 전달</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">📖</div>
+          <div class="date-rule-text"><strong>참조 문서:</strong> <code>/docs/risk_framework.md</code></div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">✔️</div>
+          <div class="date-rule-text"><strong>출력 확인:</strong> <code>risk_assessment.json</code>에 <code>severity</code> / <code>evidence</code> / <code>action</code> / <code>deadline</code> 4개 필드 모두 존재 여부 검증</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 6. 에스컬레이션 ═══ -->
+  <section>
+    <div class="section-title">
+      <div class="section-icon">🚨</div>
+      에스컬레이션 처리 방침
+    </div>
+    <div class="card">
+      <div class="escalation-steps">
+        <div class="esc-step">
+          <div class="esc-num">1</div>
+          <div class="esc-text">어떤 STEP에서 실패했는지 명시</div>
+        </div>
+        <div class="esc-step">
+          <div class="esc-num">2</div>
+          <div class="esc-text">실패 원인을 한국어로 구체적으로 설명</div>
+        </div>
+        <div class="esc-step">
+          <div class="esc-num">3</div>
+          <div class="esc-text">사용자가 취해야 할 조치를 단계별로 안내</div>
+        </div>
+        <div class="esc-step">
+          <div class="esc-num">4</div>
+          <div class="esc-text">가능한 경우 대안 경로 제시 <span style="color:var(--text-muted)">(예: 수동 파일 경로 열기)</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 7. 날짜 처리 규칙 ═══ -->
+  <section>
+    <div class="section-title">
+      <div class="section-icon">📅</div>
+      날짜 처리 규칙
+    </div>
+    <div class="card">
+      <div class="date-rules">
+        <div class="date-rule">
+          <div class="date-rule-icon">🕐</div>
+          <div class="date-rule-text">분석 기준일: <code>datetime.now().strftime('%Y%m%d')</code> 자동 감지</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">📁</div>
+          <div class="date-rule-text">output 폴더: <code>output/{YYYYMMDD}/</code> 형태로 자동 생성</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">📊</div>
+          <div class="date-rule-text">이전 주 폴더: output/ 하위에서 가장 최근 날짜 폴더(현재 제외)를 자동 탐색하여 트렌드 비교에 활용</div>
+        </div>
+        <div class="date-rule">
+          <div class="date-rule-icon">🆕</div>
+          <div class="date-rule-text">최초 실행 시: 이전 주 폴더 없으면 트렌드 섹션 빈 배열 초기화, trend_change 모두 <strong>"신규"</strong> 설정</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ 8. 파일 패턴 ═══ -->
+  <section>
+    <div class="section-title">
+      <div class="section-icon">📂</div>
+      파일 패턴 (실제 파일명 기준)
+    </div>
+    <div class="pattern-grid">
+      <div class="pattern-card">
+        <div class="pattern-type wbs">WBS</div>
+        <div class="pattern-code">WBS_*.xlsx</div>
+        <div class="pattern-code">wbs_*.xlsx</div>
+        <div class="pattern-note">대소문자 무관, input/ 및 루트 모두 탐색</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-type iabo">IA_BO</div>
+        <div class="pattern-code">IA_BO_*.xlsx</div>
+        <div class="pattern-code">ia_bo_*.xlsx</div>
+        <div class="pattern-note">대소문자 무관</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-type iafo">IA_FO</div>
+        <div class="pattern-code">IA_FO_*.xlsx</div>
+        <div class="pattern-code">ia_fo_*.xlsx</div>
+        <div class="pattern-note">대소문자 무관</div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-type if_">IF</div>
+        <div class="pattern-code">IF*.xlsx</div>
+        <div class="pattern-code">if*.xlsx</div>
+        <div class="pattern-note">하이픈 포함 패턴도 지원</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <strong>WBS·IA 주간 분석 에이전트</strong> — 인천공항공사 식음 플랫폼 구축 프로젝트<br>
+  <span style="margin-top:4px; display:inline-block;">메인 오케스트레이터 · STEP 1~8 자동화 파이프라인</span>
+</footer>
+
+</body>
+</html>
